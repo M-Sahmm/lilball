@@ -14,7 +14,8 @@
         }
 
         canvas {
-            background: white;
+            background: url('lilbg.jpg') no-repeat center center;
+            background-size: cover;
             border: 2px solid black;
         }
 
@@ -54,10 +55,10 @@
         }
 
         #gameOver h1 {
-            color: white;
+            color: black;
             font-size: 48px;
             margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            text-shadow: 2px 2px 4px rgba(255,255,255,0.5);
         }
 
         #restartButton {
@@ -69,6 +70,28 @@
             border: none;
             border-radius: 5px;
         }
+
+        #score {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        #highScore {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ffd700;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
     </style>
 </head>
 
@@ -77,6 +100,8 @@
 <canvas id="game" width="800" height="500"></canvas>
 <button id="startButton">Start Game</button>
 <div id="countdown">3</div>
+<div id="score">Score: 0</div>
+<div id="highScore">High Score: 0</div>
 <div id="gameOver">
     <h1>Game Over</h1>
     <button id="restartButton">Restart</button>
@@ -91,6 +116,10 @@ let gameStarted = false;
 let isGameOver = false;
 let countdown = 3;
 let keys = {};
+let score = 0;
+let highScore = localStorage.getItem('highScore') || 0;
+let baseSpeed = 5;
+let speedMultiplier = 1;
 
 // Keyboard event listeners
 document.addEventListener('keydown', (e) => {
@@ -132,33 +161,7 @@ let platform = {
 };
 
 
-// -------------------------
-// DRAW GRID
-// -------------------------
 
-function drawGrid() {
-
-    const gridSize = 25;
-
-    ctx.strokeStyle = "#ddd";
-    ctx.lineWidth = 1;
-
-    for (let x = 0; x < canvas.width; x += gridSize) {
-
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
-        ctx.stroke();
-    }
-
-    for (let y = 0; y < canvas.height; y += gridSize) {
-
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
-        ctx.stroke();
-    }
-}
 
 
 // -------------------------
@@ -235,9 +238,17 @@ function updatePlayer() {
         // Add platform's horizontal velocity to ball's horizontal velocity
         player.velocityX += platform.velocityX * 0.5;
         
-        // Maintain constant speed
+        // Add score
+        const pointsToAdd = score >= 150 ? 10 : 5;
+        score += pointsToAdd;
+        document.getElementById('score').textContent = `Score: ${score}`;
+        
+        // Increase speed slightly with each bounce
+        speedMultiplier += 0.05;
+        
+        // Maintain constant speed with current multiplier
         const currentSpeed = Math.sqrt(player.velocityX * player.velocityX + player.velocityY * player.velocityY);
-        const targetSpeed = 5;
+        const targetSpeed = baseSpeed * speedMultiplier;
         if (currentSpeed > 0) {
             player.velocityX = (player.velocityX / currentSpeed) * targetSpeed;
             player.velocityY = (player.velocityY / currentSpeed) * targetSpeed;
@@ -308,8 +319,6 @@ function gameLoop() {
 
 
     // Draw everything
-    drawGrid();
-
     drawPlatform();
     drawPlayer();
 
@@ -332,6 +341,14 @@ function gameLoop() {
 
 function triggerGameOver() {
     isGameOver = true;
+    
+    // Check for new high score
+    if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('highScore', highScore);
+        document.getElementById('highScore').textContent = `High Score: ${highScore}`;
+    }
+    
     document.getElementById('gameOver').style.display = 'block';
 }
 
@@ -354,6 +371,14 @@ function resetGame() {
     platform.x = 300;
     platform.velocityX = 0;
     
+    // Reset score and speed
+    score = 0;
+    speedMultiplier = 1;
+    document.getElementById('score').textContent = `Score: ${score}`;
+    
+    // Update high score display
+    document.getElementById('highScore').textContent = `High Score: ${highScore}`;
+    
     // Hide game over screen
     document.getElementById('gameOver').style.display = 'none';
     
@@ -367,7 +392,7 @@ function resetGame() {
 // -------------------------
 
 function setRandomBallDirection() {
-    const speed = 5;
+    const speed = baseSpeed * speedMultiplier;
     const angle = (Math.random() * Math.PI / 2) + (Math.PI / 4); // Random angle between 45 and 135 degrees
     
     player.velocityX = speed * Math.cos(angle);
@@ -408,6 +433,9 @@ startButton.addEventListener('click', () => {
 restartButton.addEventListener('click', () => {
     resetGame();
 });
+
+// Initialize high score display
+document.getElementById('highScore').textContent = `High Score: ${highScore}`;
 
 // Start game loop
 gameLoop();
