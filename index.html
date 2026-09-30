@@ -455,6 +455,9 @@ let platform = {
 function updatePlatform() {
     if (!gameStarted) return;
 
+    // Keep platform speed matched to the ball's current speed
+    platform.speed = baseSpeed * speedMultiplier;
+
     // Reset platform velocity
     platform.velocityX = 0;
 
@@ -725,6 +728,7 @@ function resetGame() {
     // Reset platform position and velocity
     platform.x = 325; // Centered position
     platform.velocityX = 0;
+    platform.speed = baseSpeed;
     
     // Reset score and speed
     score = 0;
