@@ -6,17 +6,31 @@
     <style>
         body {
             margin: 0;
-            background: #222;
+            background: url('bg-bg.jpg') no-repeat center center fixed;
+            background-size: cover;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
         }
 
+        #tvFrame {
+            position: relative;
+            padding: 30px;
+            background: #2a0033; /* Dark purple TV frame */
+            border-radius: 20px;
+            box-shadow: 
+                0 0 0 8px #1a0022, /* Outer dark purple edge */
+                0 0 0 12px #0d0011, /* Darker outer edge */
+                0 10px 30px rgba(0,0,0,0.5); /* Shadow */
+            z-index: 5;
+        }
+
         canvas {
-            background: url('lilbg.jpg') no-repeat center center;
+            background: url('bg-new.jpg') no-repeat center center;
             background-size: cover;
-            border: 2px solid black;
+            border: 4px solid #1a0022;
+            border-radius: 5px;
         }
 
         #startButton {
@@ -27,10 +41,24 @@
             padding: 20px 40px;
             font-size: 24px;
             cursor: pointer;
-            background: #4CAF50;
+            background: #ff6666; /* Light red */
             color: white;
-            border: none;
+            border: 3px solid white; /* White border */
             border-radius: 5px;
+            transition: all 0.2s ease;
+            z-index: 20;
+        }
+
+        #startButton:hover {
+            background: #ff3333; /* Darker red on hover */
+            transform: translate(-50%, -50%) scale(1.05); /* Slight scale up */
+            box-shadow: 0 0 15px rgba(255, 102, 102, 0.7); /* Glow effect */
+        }
+
+        #startButton:active {
+            background: #cc0000; /* Even darker red on click */
+            transform: translate(-50%, -50%) scale(0.95); /* Slight scale down */
+            box-shadow: 0 0 5px rgba(255, 102, 102, 0.5); /* Reduced glow */
         }
 
         #countdown {
@@ -42,7 +70,10 @@
             font-weight: bold;
             color: white;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            display: none;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.1s ease;
+            z-index: 20;
         }
 
         #gameOver {
@@ -52,56 +83,166 @@
             transform: translate(-50%, -50%);
             text-align: center;
             display: none;
+            z-index: 25;
         }
 
         #gameOver h1 {
-            color: black;
+            color: #C0C0C0; /* Silver - same as landing pad */
             font-size: 48px;
             margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(255,255,255,0.5);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
 
         #restartButton {
             padding: 20px 40px;
             font-size: 24px;
             cursor: pointer;
-            background: #f44336;
+            background: #ff6666; /* Light red - same as start button */
             color: white;
-            border: none;
+            border: 3px solid white; /* White border - same as start button */
             border-radius: 5px;
+            transition: all 0.2s ease;
+            z-index: 20;
+        }
+
+        #restartButton:hover {
+            background: #ff3333; /* Darker red on hover */
+            transform: scale(1.05); /* Slight scale up */
+            box-shadow: 0 0 15px rgba(255, 102, 102, 0.7); /* Glow effect */
+        }
+
+        #restartButton:active {
+            background: #cc0000; /* Even darker red on click */
+            transform: scale(0.95); /* Slight scale down */
+            box-shadow: 0 0 5px rgba(255, 102, 102, 0.5); /* Reduced glow */
         }
 
         #score {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: white;
-            font-size: 32px;
-            font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            display: none; /* Hidden since we have digital display in dashboard */
         }
 
         #highScore {
+            display: none; /* Hidden since we have digital display in dashboard */
+        }
+
+        #dashboard {
             position: absolute;
-            top: 60px;
+            top: calc(50% - 350px);
             left: 50%;
             transform: translateX(-50%);
-            color: #ffd700;
-            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: #1a1a1a;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 2px solid #333;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        .digitalDisplay {
+            background: #0a0a0a;
+            border: 2px solid #444;
+            border-radius: 4px;
+            padding: 6px 10px;
+            min-width: 90px;
+            text-align: center;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        .digitalDisplay .label {
+            color: #ff6600; /* Neon orange */
+            font-size: 10px;
             font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            text-transform: uppercase;
+            margin-bottom: 3px;
+            text-shadow: 0 0 5px rgba(255,102,0,0.5);
+            font-family: 'Helvetica', Arial, sans-serif;
+        }
+
+        .digitalDisplay .value {
+            color: #ff6600; /* Neon orange */
+            font-size: 18px;
+            font-weight: bold;
+            font-family: 'Helvetica', Arial, sans-serif;
+            text-shadow: 0 0 10px rgba(255,102,0,0.7);
+        }
+
+        #gaugeContainer {
+            position: relative;
+            width: 150px;
+            height: 75px;
+        }
+
+        #gaugeCanvas {
+            width: 150px;
+            height: 75px;
+        }
+
+        #controls {
+            position: absolute;
+            top: calc(50% + 300px);
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 10;
+        }
+
+        .controlButton {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background: #C0C0C0; /* Silver - matches landing pad */
+            border: 3px solid #808080;
+            color: #2a0033;
+            font-size: 22px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+        }
+
+        .controlButton:hover {
+            background: #d9d9d9;
+            transform: scale(1.1);
+            box-shadow: 0 0 12px rgba(255,255,255,0.6);
+        }
+
+        .controlButton:active {
+            background: #a0a0a0;
+            transform: scale(0.95);
         }
     </style>
 </head>
 
 <body>
 
-<canvas id="game" width="800" height="500"></canvas>
+<div id="dashboard">
+    <div class="digitalDisplay">
+        <div class="label">Score</div>
+        <div class="value" id="digitalScore">0</div>
+    </div>
+    <div id="gaugeContainer">
+        <canvas id="gaugeCanvas" width="150" height="75"></canvas>
+    </div>
+    <div class="digitalDisplay">
+        <div class="label">High Score</div>
+        <div class="value" id="digitalHighScore">0</div>
+    </div>
+</div>
+<div id="tvFrame">
+    <canvas id="game" width="800" height="500"></canvas>
+</div>
+<div id="controls">
+    <button id="muteButton" class="controlButton" title="Mute">&#128266;</button>
+    <button id="pauseButton" class="controlButton" title="Pause">&#9208;</button>
+</div>
 <button id="startButton">Start Game</button>
 <div id="countdown">3</div>
-<div id="score">Score: 0</div>
-<div id="highScore">High Score: 0</div>
 <div id="gameOver">
     <h1>Game Over</h1>
     <button id="restartButton">Restart</button>
@@ -111,15 +252,67 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
+const gaugeCanvas = document.getElementById("gaugeCanvas");
+const gaugeCtx = gaugeCanvas.getContext("2d");
+
 // Game state
 let gameStarted = false;
 let isGameOver = false;
 let countdown = 3;
+let countdownActive = false;
+let isMuted = false;
+let isPaused = false;
 let keys = {};
 let score = 0;
 let highScore = localStorage.getItem('highScore') || 0;
 let baseSpeed = 5;
 let speedMultiplier = 1;
+let buttonHovered = false;
+let bounceOffset = 0;
+let bounceDirection = 1;
+let maxScore = Math.max((parseInt(highScore) || 0) + 100, 200); // Dynamic maximum score for gauge
+
+
+// -------------------------
+// SOUND EFFECTS
+// -------------------------
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playTone(frequency, duration, type = 'sine', volume = 0.2) {
+    if (isMuted) return;
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    oscillator.type = type;
+    oscillator.frequency.value = frequency;
+    
+    gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    
+    oscillator.start(audioCtx.currentTime);
+    oscillator.stop(audioCtx.currentTime + duration);
+}
+
+function playBounceSound() {
+    playTone(400, 0.1, 'square', 0.15);
+}
+
+function playCountdownSound() {
+    playTone(600, 0.15, 'sine', 0.2);
+}
+
+function playGameStartSound() {
+    playTone(900, 0.3, 'sine', 0.25);
+}
+
+function playGameOverSound() {
+    playTone(200, 0.5, 'sawtooth', 0.2);
+}
+
 
 // Keyboard event listeners
 document.addEventListener('keydown', (e) => {
@@ -132,6 +325,96 @@ document.addEventListener('keyup', (e) => {
 
 
 // -------------------------
+// DRAW GAUGE
+// -------------------------
+
+function drawGauge() {
+    const centerX = gaugeCanvas.width / 2;
+    const centerY = gaugeCanvas.height - 8;
+    const radius = 60;
+    
+    // Update max score dynamically if current score exceeds it
+    if (score > maxScore) {
+        maxScore = score + 100;
+    }
+    
+    // Clear gauge canvas
+    gaugeCtx.clearRect(0, 0, gaugeCanvas.width, gaugeCanvas.height);
+    
+    // Draw gauge background arc
+    gaugeCtx.beginPath();
+    gaugeCtx.arc(centerX, centerY, radius, Math.PI, 0);
+    gaugeCtx.strokeStyle = '#333';
+    gaugeCtx.lineWidth = 12;
+    gaugeCtx.stroke();
+    
+    // Draw gauge arc based on score
+    const scorePercentage = Math.min(score / maxScore, 1);
+    const startAngle = Math.PI;
+    const endAngle = Math.PI + (scorePercentage * Math.PI);
+    
+    // Create gradient for gauge
+    const gradient = gaugeCtx.createLinearGradient(0, 0, gaugeCanvas.width, 0);
+    gradient.addColorStop(0, '#00ff00'); // Green at start
+    gradient.addColorStop(0.5, '#ffff00'); // Yellow in middle
+    gradient.addColorStop(1, '#ff0000'); // Red at end
+    
+    gaugeCtx.beginPath();
+    gaugeCtx.arc(centerX, centerY, radius, startAngle, endAngle);
+    gaugeCtx.strokeStyle = gradient;
+    gaugeCtx.lineWidth = 15;
+    gaugeCtx.lineCap = 'round';
+    gaugeCtx.stroke();
+    
+    // Draw tick marks
+    gaugeCtx.strokeStyle = '#666';
+    gaugeCtx.lineWidth = 2;
+    for (let i = 0; i <= 10; i++) {
+        const angle = Math.PI + (i / 10) * Math.PI;
+        const innerRadius = radius - 15;
+        const outerRadius = radius - 4;
+        
+        const x1 = centerX + Math.cos(angle) * innerRadius;
+        const y1 = centerY + Math.sin(angle) * innerRadius;
+        const x2 = centerX + Math.cos(angle) * outerRadius;
+        const y2 = centerY + Math.sin(angle) * outerRadius;
+        
+        gaugeCtx.beginPath();
+        gaugeCtx.moveTo(x1, y1);
+        gaugeCtx.lineTo(x2, y2);
+        gaugeCtx.stroke();
+    }
+    
+    // Draw needle
+    const needleAngle = Math.PI + (scorePercentage * Math.PI);
+    const needleLength = radius - 5;
+    
+    gaugeCtx.beginPath();
+    gaugeCtx.moveTo(centerX, centerY);
+    gaugeCtx.lineTo(
+        centerX + Math.cos(needleAngle) * needleLength,
+        centerY + Math.sin(needleAngle) * needleLength
+    );
+    gaugeCtx.strokeStyle = '#ff3333';
+    gaugeCtx.lineWidth = 3;
+    gaugeCtx.stroke();
+    
+    // Draw center circle
+    gaugeCtx.beginPath();
+    gaugeCtx.arc(centerX, centerY, 8, 0, Math.PI * 2);
+    gaugeCtx.fillStyle = '#ff3333';
+    gaugeCtx.fill();
+    
+    // Draw score labels
+    gaugeCtx.fillStyle = '#888';
+    gaugeCtx.font = '7px Arial';
+    gaugeCtx.textAlign = 'center';
+    gaugeCtx.fillText('0', centerX - radius + 20, centerY - 8);
+    gaugeCtx.fillText(maxScore.toString(), centerX + radius - 20, centerY - 8);
+}
+
+
+// -------------------------
 // PLAYER
 // -------------------------
 
@@ -141,7 +424,8 @@ let player = {
     radius: 15,
 
     velocityX: 0,
-    velocityY: 0
+    velocityY: 0,
+    rotation: 0
 };
 
 
@@ -150,7 +434,7 @@ let player = {
 // -------------------------
 
 let platform = {
-    x: 300,
+    x: 325, // Centered: (800 - 150) / 2 = 325
     y: 450,
 
     width: 150,
@@ -210,18 +494,21 @@ function updatePlayer() {
     if (player.x - player.radius <= 0) {
         player.x = player.radius;
         player.velocityX *= -1;
+        playBounceSound();
     }
 
     // Right wall
     if (player.x + player.radius >= canvas.width) {
         player.x = canvas.width - player.radius;
         player.velocityX *= -1;
+        playBounceSound();
     }
 
     // Ceiling
     if (player.y - player.radius <= 0) {
         player.y = player.radius;
         player.velocityY *= -1;
+        playBounceSound();
     }
 
     // Platform collision
@@ -234,6 +521,7 @@ function updatePlayer() {
     ) {
         player.y = platform.y - player.radius;
         player.velocityY *= -1;
+        playBounceSound();
         
         // Add platform's horizontal velocity to ball's horizontal velocity
         player.velocityX += platform.velocityX * 0.5;
@@ -241,7 +529,7 @@ function updatePlayer() {
         // Add score
         const pointsToAdd = score >= 150 ? 10 : 5;
         score += pointsToAdd;
-        document.getElementById('score').textContent = `Score: ${score}`;
+        document.getElementById('digitalScore').textContent = score;
         
         // Increase speed slightly with each bounce
         speedMultiplier += 0.05;
@@ -267,19 +555,59 @@ function updatePlayer() {
 // -------------------------
 
 function drawPlayer() {
-
-    ctx.beginPath();
-
-    ctx.arc(
-        player.x,
-        player.y,
-        player.radius,
-        0,
-        Math.PI * 2
+    // Update bounce animation when button is hovered
+    if (buttonHovered && !gameStarted) {
+        bounceOffset += 0.5 * bounceDirection;
+        if (bounceOffset > 10 || bounceOffset < -10) {
+            bounceDirection *= -1;
+        }
+    }
+    
+    ctx.save();
+    ctx.translate(player.x, player.y + bounceOffset);
+    ctx.rotate(player.rotation);
+    
+    // Create metallic gradient
+    const gradient = ctx.createRadialGradient(
+        -player.radius * 0.3, -player.radius * 0.3, player.radius * 0.1,
+        0, 0, player.radius
     );
-
-    ctx.fillStyle = "red";
+    gradient.addColorStop(0, '#ffffff'); // Highlight
+    gradient.addColorStop(0.3, '#d4d4d4'); // Light silver
+    gradient.addColorStop(0.5, '#a8a8a8'); // Medium silver
+    gradient.addColorStop(0.7, '#808080'); // Darker silver
+    gradient.addColorStop(1, '#404040'); // Dark edge
+    
+    // Draw metallic ball
+    ctx.beginPath();
+    ctx.arc(0, 0, player.radius, 0, Math.PI * 2);
+    ctx.fillStyle = gradient;
     ctx.fill();
+    
+    // Add metallic shine lines
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.3;
+    
+    // Horizontal shine line
+    ctx.beginPath();
+    ctx.moveTo(-player.radius * 0.6, -player.radius * 0.2);
+    ctx.lineTo(player.radius * 0.6, -player.radius * 0.2);
+    ctx.stroke();
+    
+    // Vertical shine line
+    ctx.beginPath();
+    ctx.moveTo(-player.radius * 0.2, -player.radius * 0.6);
+    ctx.lineTo(-player.radius * 0.2, player.radius * 0.6);
+    ctx.stroke();
+    
+    ctx.globalAlpha = 1;
+    ctx.restore();
+    
+    // Update rotation for spinning animation
+    if (gameStarted && !isGameOver && !isPaused) {
+        player.rotation += 0.1;
+    }
 }
 
 
@@ -288,15 +616,32 @@ function drawPlayer() {
 // -------------------------
 
 function drawPlatform() {
-
-    ctx.fillStyle = "blue";
-
-    ctx.fillRect(
-        platform.x,
-        platform.y,
-        platform.width,
-        platform.height
-    );
+    // Draw landing pad shape (trapezoid)
+    ctx.fillStyle = "#C0C0C0"; // Silver color
+    
+    ctx.beginPath();
+    ctx.moveTo(platform.x + 10, platform.y); // Top left
+    ctx.lineTo(platform.x + platform.width - 10, platform.y); // Top right
+    ctx.lineTo(platform.x + platform.width, platform.y + platform.height); // Bottom right
+    ctx.lineTo(platform.x, platform.y + platform.height); // Bottom left
+    ctx.closePath();
+    ctx.fill();
+    
+    // Add landing pad markings
+    ctx.strokeStyle = "#808080"; // Darker silver for markings
+    ctx.lineWidth = 2;
+    
+    // Horizontal stripe
+    ctx.beginPath();
+    ctx.moveTo(platform.x + 20, platform.y + platform.height / 2);
+    ctx.lineTo(platform.x + platform.width - 20, platform.y + platform.height / 2);
+    ctx.stroke();
+    
+    // Vertical center line
+    ctx.beginPath();
+    ctx.moveTo(platform.x + platform.width / 2, platform.y + 5);
+    ctx.lineTo(platform.x + platform.width / 2, platform.y + platform.height - 5);
+    ctx.stroke();
 }
 
 
@@ -323,10 +668,15 @@ function gameLoop() {
     drawPlayer();
 
 
-    // Update everything only if game started and not game over
-    if (gameStarted && !isGameOver) {
+    // Update everything only if game started, not game over, and not paused
+    if (gameStarted && !isGameOver && !isPaused) {
         updatePlatform();
         updatePlayer();
+    }
+    
+    // Draw gauge whenever it should be visible (countdown, gameplay, or after scoring)
+    if (gameStarted || countdownActive || score > 0) {
+        drawGauge();
     }
 
 
@@ -341,12 +691,13 @@ function gameLoop() {
 
 function triggerGameOver() {
     isGameOver = true;
+    playGameOverSound();
     
     // Check for new high score
     if (score > highScore) {
         highScore = score;
         localStorage.setItem('highScore', highScore);
-        document.getElementById('highScore').textContent = `High Score: ${highScore}`;
+        document.getElementById('digitalHighScore').textContent = highScore;
     }
     
     document.getElementById('gameOver').style.display = 'block';
@@ -360,24 +711,29 @@ function triggerGameOver() {
 function resetGame() {
     isGameOver = false;
     gameStarted = false;
+    isPaused = false;
+    pauseButton.innerHTML = '&#9208;';
+    pauseButton.title = 'Pause';
     
     // Reset player position
     player.x = 400;
     player.y = 200;
     player.velocityX = 0;
     player.velocityY = 0;
+    player.rotation = 0;
     
     // Reset platform position and velocity
-    platform.x = 300;
+    platform.x = 325; // Centered position
     platform.velocityX = 0;
     
     // Reset score and speed
     score = 0;
     speedMultiplier = 1;
-    document.getElementById('score').textContent = `Score: ${score}`;
+    document.getElementById('digitalScore').textContent = score;
     
-    // Update high score display
-    document.getElementById('highScore').textContent = `High Score: ${highScore}`;
+    // Update high score display and recalculate max score
+    document.getElementById('digitalHighScore').textContent = highScore;
+    maxScore = Math.max((parseInt(highScore) || 0) + 100, 200);
     
     // Hide game over screen
     document.getElementById('gameOver').style.display = 'none';
@@ -410,22 +766,44 @@ const startButton = document.getElementById('startButton');
 const countdownDisplay = document.getElementById('countdown');
 const restartButton = document.getElementById('restartButton');
 
+// Button hover event listeners
+startButton.addEventListener('mouseenter', () => {
+    buttonHovered = true;
+});
+
+startButton.addEventListener('mouseleave', () => {
+    buttonHovered = false;
+    bounceOffset = 0;
+});
+
 startButton.addEventListener('click', () => {
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    
     startButton.style.display = 'none';
-    countdownDisplay.style.display = 'block';
+    countdownDisplay.style.opacity = '1';
+    countdownActive = true;
     
     let count = 3;
     countdownDisplay.textContent = count;
+    playCountdownSound();
     
     const countdownInterval = setInterval(() => {
         count--;
         if (count > 0) {
             countdownDisplay.textContent = count;
+            playCountdownSound();
         } else {
             clearInterval(countdownInterval);
-            countdownDisplay.style.display = 'none';
-            setRandomBallDirection();
-            gameStarted = true;
+            countdownDisplay.style.opacity = '0';
+            countdownActive = false;
+            // Use requestAnimationFrame to ensure smooth transition
+            requestAnimationFrame(() => {
+                setRandomBallDirection();
+                gameStarted = true;
+                playGameStartSound();
+            });
         }
     }, 1000);
 });
@@ -434,8 +812,27 @@ restartButton.addEventListener('click', () => {
     resetGame();
 });
 
+// Mute button functionality
+const muteButton = document.getElementById('muteButton');
+
+muteButton.addEventListener('click', () => {
+    isMuted = !isMuted;
+    muteButton.innerHTML = isMuted ? '&#128263;' : '&#128266;';
+    muteButton.title = isMuted ? 'Unmute' : 'Mute';
+});
+
+// Pause button functionality
+const pauseButton = document.getElementById('pauseButton');
+
+pauseButton.addEventListener('click', () => {
+    isPaused = !isPaused;
+    pauseButton.innerHTML = isPaused ? '&#9654;' : '&#9208;';
+    pauseButton.title = isPaused ? 'Resume' : 'Pause';
+});
+
 // Initialize high score display
-document.getElementById('highScore').textContent = `High Score: ${highScore}`;
+document.getElementById('digitalHighScore').textContent = highScore;
+document.getElementById('digitalScore').textContent = score;
 
 // Start game loop
 gameLoop();
